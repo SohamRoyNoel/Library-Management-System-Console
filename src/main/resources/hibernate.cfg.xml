@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hibernate-configuration>
+    <session-factory>
+
+        <!-- Database connection -->
+        <property name="hibernate.connection.driver_class">
+            com.mysql.cj.jdbc.Driver
+        </property>
+
+        <property name="hibernate.connection.url">
+		    jdbc:mysql://localhost:3306/lms_db?useSSL=false&amp;serverTimezone=UTC
+		</property>
+
+        <property name="hibernate.connection.username">root</property>
+        <property name="hibernate.connection.password">Node@2021</property>
+
+        <!-- Hibernate properties -->
+        <property name="hibernate.dialect">
+            org.hibernate.dialect.MySQLDialect
+        </property>
+        <property name="hibernate.hbm2ddl.auto">update</property>
+        <property name="hibernate.show_sql">true</property>
+
+        <!-- Entity -->
+        <mapping class="com.lms.books.Book"/>
+
+    </session-factory>
+</hibernate-configuration>
