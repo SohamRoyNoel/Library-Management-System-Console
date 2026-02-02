@@ -1,5 +1,6 @@
-package com.lms.member;
+package com.lms.modules.member;
 
+import com.lms.dto.MemberSearchCriteria;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 
@@ -7,8 +8,11 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
+import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.ThreadLocalRandom;
+
+import static com.lms.utils.Commons.orElse;
 
 public class MemberConsole {
     public void decideActions(Scanner sc) {
@@ -21,6 +25,8 @@ public class MemberConsole {
                     Member memberModel = this.readMemberInput(sc, null);
                     Service.getInstance().saveMember(memberModel);
                     break;
+                case "search":
+                    this.searchMember(sc);
                 default:
                     System.out.println("Invalid action");
                     break;
@@ -71,15 +77,15 @@ public class MemberConsole {
                 .membershipType(membershipType).build();
     }
 
-    private String orElse(String input, String fallback) {
-        return (input == null || input.isBlank()) ? fallback : input;
-    }
-
-    private Float orElse(Float input, Float fallback) {
-        return input != null ? input : fallback;
-    }
-
-    private Date orElse(LocalDate input, Date fallback) {
-        return input != null ? Date.from(input.atStartOfDay(ZoneId.systemDefault()).toInstant()) : fallback;
+    private List<Member> searchMember(Scanner sc) {
+        MemberSearchCriteria msc = new MemberSearchCriteria();
+        System.out.println("You can search/update by Member ID only");
+        String input = sc.nextLine();
+        msc.setMembershipVirtualId(input);
+        List<Member> members = Service.getInstance().searchMember(msc);
+        if (!members.isEmpty()) {
+            PrintMembersTable.printMembersTable(members);
+        }
+        return members;
     }
 }

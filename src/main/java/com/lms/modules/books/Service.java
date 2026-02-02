@@ -1,4 +1,4 @@
-package com.lms.books;
+package com.lms.modules.books;
 
 import com.lms.HibernateUtil;
 import com.lms.dto.BookSearchCriteria;

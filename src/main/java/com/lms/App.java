@@ -1,8 +1,8 @@
 package com.lms;
 
 import java.util.Scanner;
-import com.lms.books.BooksConsole;
-import com.lms.member.MemberConsole;
+import com.lms.modules.books.BooksConsole;
+import com.lms.modules.member.MemberConsole;
 
 public class App {
 

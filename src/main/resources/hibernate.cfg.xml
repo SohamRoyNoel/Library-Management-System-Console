@@ -22,8 +22,8 @@
         <property name="hibernate.show_sql">true</property>
 
         <!-- Entity -->
-        <mapping class="com.lms.books.Book"/>
-        <mapping class="com.lms.member.Member"/>
+        <mapping class="com.lms.modules.books.Book"/>
+        <mapping class="com.lms.modules.member.Member"/>
 
     </session-factory>
 </hibernate-configuration>

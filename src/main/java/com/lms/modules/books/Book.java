@@ -1,4 +1,4 @@
-package com.lms.books;
+package com.lms.modules.books;
 
 import java.util.Date;
 

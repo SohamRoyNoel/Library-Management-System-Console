@@ -1,6 +1,6 @@
-package com.lms.member;
+package com.lms.modules.member;
 
-import com.lms.person.Person;
+import com.lms.modules.person.Person;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;

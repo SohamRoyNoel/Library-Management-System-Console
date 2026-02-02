@@ -1,4 +1,4 @@
-package com.lms.person;
+package com.lms.modules.person;
 
 import jakarta.persistence.*;
 import lombok.*;
