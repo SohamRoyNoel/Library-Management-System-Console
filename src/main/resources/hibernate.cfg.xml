@@ -23,6 +23,7 @@
 
         <!-- Entity -->
         <mapping class="com.lms.books.Book"/>
+        <mapping class="com.lms.member.Member"/>
 
     </session-factory>
 </hibernate-configuration>

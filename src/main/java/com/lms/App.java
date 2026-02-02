@@ -2,6 +2,7 @@ package com.lms;
 
 import java.util.Scanner;
 import com.lms.books.BooksConsole;
+import com.lms.member.MemberConsole;
 
 public class App {
 
@@ -11,9 +12,10 @@ public class App {
 
         Scanner sc = new Scanner(System.in);
         BooksConsole bc = new BooksConsole();
+        MemberConsole mc = new MemberConsole();
 
         while (true) {
-            System.out.println("\nChoose module: book | exit");
+            System.out.println("\nChoose module: book | member | exit");
             String input = sc.nextLine();
 
             if ("exit".equalsIgnoreCase(input)) {
@@ -23,6 +25,8 @@ public class App {
 
             if ("book".equalsIgnoreCase(input)) {
                 bc.decideActions(sc);
+            } else if ("member".equalsIgnoreCase(input)) {
+                mc.decideActions(sc);
             } else {
                 System.out.println("❌ Invalid option");
             }
