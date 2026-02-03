@@ -8,7 +8,7 @@ import java.util.List;
 public class PrintBooksTable {
     public static void printBooksTable(List<Book> books) {
         TablePrinter.print(books, List.of(
-                new ColumnDef<>("ID", 4, b -> String.valueOf(b.getId())),
+                new ColumnDef<>("ID", 4, b -> String.valueOf(b.getId())), // It converts ANY value into a String.
                 new ColumnDef<>("ISBN", 14, Book::getIsbn),
                 new ColumnDef<>("TITLE", 16, Book::getTitle),
                 new ColumnDef<>("AUTHOR", 18, Book::getAuthor),
