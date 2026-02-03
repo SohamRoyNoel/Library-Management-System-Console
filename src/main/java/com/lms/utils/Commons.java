@@ -3,6 +3,7 @@ package com.lms.utils;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.Scanner;
 
 public final class Commons {
 
@@ -17,6 +18,22 @@ public final class Commons {
     }
 
     public static Date orElse(LocalDate input, Date fallback) {
-        return input != null ? Date.from(input.atStartOfDay(ZoneId.systemDefault()).toInstant()) : fallback;
+        return input != null && !input.toString().isEmpty() ? Date.from(input.atStartOfDay(ZoneId.systemDefault()).toInstant()) : fallback;
+    }
+
+    public static Float readFloatOrElse(Scanner sc, Float fallback) {
+        String input = sc.nextLine();
+        return input.isBlank() ? fallback : Float.parseFloat(input);
+    }
+
+    public static Date addYears(Date date, int years) {
+        return Date.from(
+                date.toInstant()
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDate()
+                        .plusYears(years)
+                        .atStartOfDay(ZoneId.systemDefault())
+                        .toInstant()
+        );
     }
 }

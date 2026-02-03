@@ -7,15 +7,14 @@ import jakarta.annotation.Nullable;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static com.lms.utils.Commons.orElse;
+import static com.lms.utils.Commons.*;
 
 public class MemberConsole {
     public void decideActions(Scanner sc) {
+        List<Member> membersList = new ArrayList<>();
         System.out.println("What you want to do with members?");
         System.out.println("Add | Update | Delete | Search");
         String action = sc.nextLine();
@@ -23,10 +22,21 @@ public class MemberConsole {
             switch (action) {
                 case "add":
                     Member memberModel = this.readMemberInput(sc, null);
-                    Service.getInstance().saveMember(memberModel);
+                    Member savedMem = Service.getInstance().saveMember(memberModel);
+                    membersList.add(savedMem);
+                    System.out.println("Saved Member Details");
+                    PrintMembersTable.printMembersTable(membersList);
                     break;
                 case "search":
                     this.searchMember(sc);
+                    break;
+                case "update":
+                    Member memberUpdateModel = this.updateMember(sc);
+                    Member updatedMem = Service.getInstance().saveMember(memberUpdateModel);
+                    membersList.add(updatedMem);
+                    System.out.println("Updated Member Details");
+                    PrintMembersTable.printMembersTable(membersList);
+                    break;
                 default:
                     System.out.println("Invalid action");
                     break;
@@ -37,6 +47,9 @@ public class MemberConsole {
     }
 
     private Member readMemberInput(@Nonnull Scanner sc, @Nullable Member member) {
+        Date membershipExpiredAt;
+        String membershipVirtualId;
+
         Member base = (member != null) ? member : new Member();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
         System.out.print("Name: ");
@@ -49,20 +62,28 @@ public class MemberConsole {
         String phNo = orElse(sc.nextLine(), base.getPhoneNumber());
 
         System.out.print("Date of joining: ");
-        LocalDate date = LocalDate.parse(sc.nextLine(), formatter);
-        Date doj = orElse(date, base.getDoj());
+        String locDate = sc.nextLine();
+        Date doj = locDate.isEmpty()
+                ? base.getDoj()
+                : Date.from(
+                LocalDate.parse(locDate, formatter)
+                        .atStartOfDay(ZoneId.systemDefault())
+                        .toInstant()
+        );
 
         System.out.print("Govt Id: ");
         String govtId = orElse(sc.nextLine(), base.getGovtId());
 
         System.out.print("Fee: ");
-        Float fee = orElse(Float.parseFloat(sc.nextLine()), base.getFeeAmount());
+        Float fee = readFloatOrElse(sc, base.getFeeAmount());
 
         System.out.print("Membership type: ");
         String membershipType = orElse(sc.nextLine(), base.getMembershipType());
 
-        Date membershipExpiredAt = Date.from(date.plusYears(6).atStartOfDay(ZoneId.systemDefault()).toInstant());
-        String membershipVirtualId =Long.toString(Math.abs(ThreadLocalRandom.current().nextLong()), 36).substring(0, 6).toUpperCase();
+        membershipExpiredAt = !locDate.isEmpty() ? addYears(doj, 5) : base.getMembershipExpiredAt();
+        membershipVirtualId = member == null ? Long.toString(
+                Math.abs(ThreadLocalRandom.current().nextLong()), 36
+        ).substring(0, 6).toUpperCase() : base.getMembershipVirtualId();
 
         return Member.builder()
                 .id(base.getId())
@@ -79,13 +100,25 @@ public class MemberConsole {
 
     private List<Member> searchMember(Scanner sc) {
         MemberSearchCriteria msc = new MemberSearchCriteria();
-        System.out.println("You can search/update by Member ID only");
+        System.out.println("You can search by Member ID only");
         String input = sc.nextLine();
         msc.setMembershipVirtualId(input);
         List<Member> members = Service.getInstance().searchMember(msc);
         if (!members.isEmpty()) {
+            System.out.println("Member Found with ID " + input);
             PrintMembersTable.printMembersTable(members);
         }
         return members;
+    }
+
+    private Member updateMember(Scanner sc) {
+        var memberAsList = this.searchMember(sc);
+        System.out.print("Found Member, Details, Type 'Y' to proceed: ");
+        String confirmation = sc.nextLine();
+        if (!"y".equalsIgnoreCase(confirmation.toLowerCase(Locale.ROOT))) {
+            System.out.print("Update Aborted");
+            return null;
+        }
+        return this.readMemberInput(sc, memberAsList.get(0));
     }
 }

@@ -74,7 +74,7 @@ public class BooksConsole {
 	}
 
 	private List<Book> searchBook(Scanner sc, String actionFlag) {
-		BookSearchCriteria criteria = null;
+		BookSearchCriteria criteria;
 		if (!actionFlag.isEmpty() && "update".equalsIgnoreCase(actionFlag)) {
 			BookSearchCriteria bsc = new BookSearchCriteria();
 			System.out.println("You can search and update by ISBN only");

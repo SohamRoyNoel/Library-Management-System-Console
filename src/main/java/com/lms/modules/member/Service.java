@@ -21,12 +21,13 @@ public class Service {
         return INSTANCE;
     }
 
-    public void saveMember(Member member) {
+    public Member saveMember(Member member) {
         Transaction tx = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             tx = session.beginTransaction();
-            session.merge(member);
+            Member savedMember = session.merge(member);
             tx.commit();
+            return savedMember;
         } catch (Exception e) {
             if (tx != null) tx.rollback();
             throw e;
