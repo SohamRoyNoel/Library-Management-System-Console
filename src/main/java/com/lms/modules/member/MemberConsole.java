@@ -21,7 +21,7 @@ public class MemberConsole {
         try {
             switch (action) {
                 case "add":
-                    Member memberModel = this.readMemberInput(sc, null);
+                    Member memberModel = this.readMemberInput(sc, null, null);
                     Member savedMem = Service.getInstance().saveMember(memberModel);
                     membersList.add(savedMem);
                     System.out.println("Saved Member Details");
@@ -31,11 +31,18 @@ public class MemberConsole {
                     this.searchMember(sc);
                     break;
                 case "update":
-                    Member memberUpdateModel = this.updateMember(sc);
+                    Member memberUpdateModel = this.updateMember(sc, null);
                     Member updatedMem = Service.getInstance().saveMember(memberUpdateModel);
                     membersList.add(updatedMem);
                     System.out.println("Updated Member Details");
                     PrintMembersTable.printMembersTable(membersList);
+                    break;
+                case "delete":
+                    Member memberDeleteModel = this.updateMember(sc,  "delete");
+                    Member deletedMem = Service.getInstance().saveMember(memberDeleteModel);
+                    if (!deletedMem.isActive()) {
+                        System.out.println("Member Deactivated with ID of " + deletedMem.getId());
+                    }
                     break;
                 default:
                     System.out.println("Invalid action");
@@ -46,11 +53,16 @@ public class MemberConsole {
         }
     }
 
-    private Member readMemberInput(@Nonnull Scanner sc, @Nullable Member member) {
+    private Member readMemberInput(@Nonnull Scanner sc, @Nullable Member member, @Nullable String flag) {
+        Member base = (member != null) ? member : new Member();
+        if ("delete".equalsIgnoreCase(flag)) {
+            base.setActive(false);
+            return base;
+        }
         Date membershipExpiredAt;
         String membershipVirtualId;
 
-        Member base = (member != null) ? member : new Member();
+
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
         System.out.print("Name: ");
         String name = orElse(sc.nextLine(), base.getName());
@@ -111,7 +123,7 @@ public class MemberConsole {
         return members;
     }
 
-    private Member updateMember(Scanner sc) {
+    private Member updateMember(Scanner sc, String flag) {
         var memberAsList = this.searchMember(sc);
         System.out.print("Found Member, Details, Type 'Y' to proceed: ");
         String confirmation = sc.nextLine();
@@ -119,6 +131,6 @@ public class MemberConsole {
             System.out.print("Update Aborted");
             return null;
         }
-        return this.readMemberInput(sc, memberAsList.get(0));
+        return this.readMemberInput(sc, memberAsList.get(0), flag);
     }
 }
