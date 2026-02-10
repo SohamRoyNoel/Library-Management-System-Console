@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BookSearchCriteria {
+    private Long id;
+    private Integer quantity;
     private String isbn;
     private String title;
     private String author;

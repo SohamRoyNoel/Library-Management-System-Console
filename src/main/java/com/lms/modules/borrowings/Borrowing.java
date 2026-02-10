@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.Date;
+import java.util.UUID;
 
 @Entity
 @Table(name="borrowing")
@@ -18,6 +19,8 @@ public class Borrowing {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(nullable = false, unique = true, updatable = false)
+    private Integer borrowingRefId;
     @Column(nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
     private Date borrowedAt;
@@ -41,6 +44,9 @@ public class Borrowing {
     protected void onCreate() {
         if (this.borrowedAt == null) {
             this.borrowedAt = new Date();
+        }
+        if (this.borrowingRefId == null) {
+            this.borrowingRefId = (int) (System.currentTimeMillis() % 1_000_000);
         }
     }
 }

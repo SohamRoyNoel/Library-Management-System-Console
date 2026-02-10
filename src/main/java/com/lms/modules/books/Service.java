@@ -50,6 +50,9 @@ public class Service {
 			if (criteria.getAuthor() !=  null) {
 				predicates.add(cb.like(cb.lower(root.get("author")), '%' + criteria.getAuthor().toLowerCase() + '%'));
 			}
+			if (criteria.getId() != null) {
+				predicates.add(cb.equal(root.get("id"), criteria.getId()));
+			}
 			cq.where(predicates.toArray(new Predicate[0]));
 			if ("price".equalsIgnoreCase(criteria.getSortBy())) {
 				cq.orderBy(

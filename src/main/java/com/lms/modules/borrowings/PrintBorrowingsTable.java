@@ -11,7 +11,7 @@ public class PrintBorrowingsTable {
 
     public static void printBorrowingsTable(List<Borrowing> borrowings) {
         TablePrinter.print(borrowings, List.of(
-                new ColumnDef<>("ID", 5, b -> String.valueOf(b.getId())),
+                new ColumnDef<>("REFERENCE ID", 5, b -> String.valueOf(b.getBorrowingRefId())),
                 new ColumnDef<>("BORROWED AT", 10, b -> DF.format(b.getBorrowedAt())),
                 new ColumnDef<>("BORROWED TILL", 5, b -> DF.format(b.getBorrowedTill())),
                 new ColumnDef<>("QUANTITY", 5, b -> String.valueOf(b.getQuantity())),

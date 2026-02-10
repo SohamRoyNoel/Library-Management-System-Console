@@ -26,9 +26,10 @@ public class BorrowingConsole {
             switch (action) {
                 case "add":
                     Borrowing borrowing = this.addABorrowing(sc);
-                    Borrowing save = com.lms.modules.borrowings.Service.getInstance().saveABooking(borrowing);
-                    borrowList.add(save);
+                    Borrowing savedBooking = com.lms.modules.borrowings.Service.getInstance().saveABooking(borrowing);
+                    borrowList.add(savedBooking);
                     System.out.println("Saved Borrowing Details");
+                    this.updateBookDataOnSuccessfulBorrow(savedBooking);
                     PrintBorrowingsTable.printBorrowingsTable(borrowList);
                     break;
                 default:
@@ -67,7 +68,25 @@ public class BorrowingConsole {
         bsc.setIsbn(isbn);
         List<Book> books = com.lms.modules.books.Service.getInstance().searchBooks(bsc);
 
+        if (members.isEmpty() || books.isEmpty()) {
+            System.out.println("Wrong Info, Fuck off now");
+            throw new RuntimeException("Wrong Info, Fuck off now");
+        }
+
         return Borrowing.builder().borrowedTill(dueDate).quantity(Integer.parseInt(quantity))
                 .book(books.get(0)).member(members.get(0)).build();
+    }
+
+    private void updateBookDataOnSuccessfulBorrow(Borrowing borrowing) {
+        BookSearchCriteria bsc = new BookSearchCriteria();
+        bsc.setId(borrowing.getBook().getId());
+        List<Book> books = com.lms.modules.books.Service.getInstance().searchBooks(bsc);
+
+        if (books.get(0).getQuantity() < borrowing.getQuantity()) {
+            System.out.println("Available: " + books.get(0).getQuantity() + " Requested: " + borrowing.getQuantity());
+            return;
+        }
+        books.get(0).setQuantity(books.get(0).getQuantity() - borrowing.getQuantity());
+        com.lms.modules.books.Service.getInstance().saveABook(books.get(0));
     }
 }
