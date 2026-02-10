@@ -24,6 +24,7 @@
         <!-- Entity -->
         <mapping class="com.lms.modules.books.Book"/>
         <mapping class="com.lms.modules.member.Member"/>
+        <mapping class="com.lms.modules.borrowings.Borrowing"/>
 
     </session-factory>
 </hibernate-configuration>

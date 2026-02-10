@@ -2,6 +2,7 @@ package com.lms;
 
 import java.util.Scanner;
 import com.lms.modules.books.BooksConsole;
+import com.lms.modules.borrowings.BorrowingConsole;
 import com.lms.modules.member.MemberConsole;
 
 public class App {
@@ -13,9 +14,10 @@ public class App {
         Scanner sc = new Scanner(System.in);
         BooksConsole bc = new BooksConsole();
         MemberConsole mc = new MemberConsole();
+        BorrowingConsole brc = new BorrowingConsole();
 
         while (true) {
-            System.out.println("\nChoose module: book | member | exit");
+            System.out.println("\nChoose module: book | member | borrow | exit");
             String input = sc.nextLine();
 
             if ("exit".equalsIgnoreCase(input)) {
@@ -27,6 +29,8 @@ public class App {
                 bc.decideActions(sc);
             } else if ("member".equalsIgnoreCase(input)) {
                 mc.decideActions(sc);
+            } else if ("borrow".equalsIgnoreCase(input)) {
+                brc.decideActions(sc);
             } else {
                 System.out.println("❌ Invalid option");
             }

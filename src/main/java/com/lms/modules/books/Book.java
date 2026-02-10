@@ -1,7 +1,10 @@
 package com.lms.modules.books;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
+import com.lms.modules.borrowings.Borrowing;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -36,6 +39,9 @@ public class Book {
 	private Date purchasedDate;
 	@Column(nullable = false)
 	private boolean isDeleted;
+
+	@OneToMany(mappedBy = "book")
+	private List<Borrowing> borrowings = new ArrayList<>();
 
 	@PrePersist
 	public void prePersist() {
