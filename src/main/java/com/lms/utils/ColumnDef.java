@@ -3,6 +3,7 @@ package com.lms.utils;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.function.Function;
 
@@ -11,6 +12,8 @@ import java.util.function.Function;
 @AllArgsConstructor
 public class ColumnDef<T> {
     private final String header;
-    private final int width;
+    @Setter
+    private int width;
     private final Function<T, String> valueExtractor;
+
 }

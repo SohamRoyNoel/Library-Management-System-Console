@@ -1,6 +1,7 @@
 package com.lms.modules.borrowings;
 
 import com.lms.dto.BookSearchCriteria;
+import com.lms.dto.BorrowingSearchCriteria;
 import com.lms.dto.MemberSearchCriteria;
 import com.lms.modules.books.Book;
 import com.lms.modules.member.Member;
@@ -9,10 +10,7 @@ import com.lms.modules.member.Service;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 import static com.lms.utils.Commons.orElse;
 
@@ -31,6 +29,11 @@ public class BorrowingConsole {
                     System.out.println("Saved Borrowing Details");
                     this.updateBookDataOnSuccessfulBorrow(savedBooking);
                     PrintBorrowingsTable.printBorrowingsTable(borrowList);
+                    break;
+                case "search":
+                    // search by BOOK ISBN | MEMBER ID | BORROWING ID
+                    List<Borrowing> listOfBorrowings = this.searchDetails(sc);
+                    PrintBorrowingsTable.printBorrowingsTable(listOfBorrowings);
                     break;
                 default:
                     break;
@@ -88,5 +91,35 @@ public class BorrowingConsole {
         }
         books.get(0).setQuantity(books.get(0).getQuantity() - borrowing.getQuantity());
         com.lms.modules.books.Service.getInstance().saveABook(books.get(0));
+    }
+
+    private List<Borrowing> searchDetails(Scanner sc) {
+        System.out.println("Search By BOOK ISBN | MEMBER ID | REF NUMBER, All or by any");
+        String searchParams = sc.nextLine();
+        BorrowingSearchCriteria bsc = this.parseSearchInput(searchParams);
+        return com.lms.modules.borrowings.Service.getInstance().searchBorrowing(bsc);
+    }
+
+    private BorrowingSearchCriteria parseSearchInput(String input) {
+        try {
+            BorrowingSearchCriteria bsc = new BorrowingSearchCriteria();
+            String[] parts = input.toLowerCase(Locale.ROOT).split(",");
+            for (String part: parts) {
+                String[] params = part.split(":");
+                if (params.length != 2) throw new Exception("Wrong parameters");
+                var key = params[0].trim();
+                var value = params[1].trim();
+                if ("isbn".equalsIgnoreCase(key)) {
+                    bsc.getBook().setIsbn(value);
+                } else if ("member".equalsIgnoreCase(key)) {
+                    bsc.getMember().setMembershipVirtualId(value);
+                } else if ("reference".equalsIgnoreCase(key)){
+                    bsc.setBorrowingRefId(value);
+                }
+            }
+            return bsc;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

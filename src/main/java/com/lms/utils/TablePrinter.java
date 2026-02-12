@@ -13,6 +13,19 @@ public final class TablePrinter {
             return;
         }
 
+        for (ColumnDef<T> col : columns) {
+            int maxWidth = col.getHeader().length();
+
+            for (T row : data) {
+                String value = col.getValueExtractor().apply(row);
+                if (value != null) {
+                    maxWidth = Math.max(maxWidth, value.length());
+                }
+            }
+
+            col.setWidth(maxWidth + 2); // little padding
+        }
+
         printLine(columns);
         printHeader(columns);
         printLine(columns);
