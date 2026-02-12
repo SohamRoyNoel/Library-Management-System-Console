@@ -3,6 +3,7 @@ package com.lms.modules.borrowings;
 import com.lms.HibernateUtil;
 import com.lms.dto.BorrowingSearchCriteria;
 import com.lms.modules.books.Book;
+import com.lms.modules.member.Member;
 import jakarta.persistence.criteria.*;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
@@ -57,6 +58,23 @@ public class Service {
                         cb.equal(
                                 bookJoin.get("isbn"),
                                 bsc.getBook().getIsbn()
+                        )
+                );
+            }
+            if (bsc.getMember() != null && bsc.getMember().getMembershipVirtualId() != null) {
+                Join<Member, Borrowing> memberJoin = root.join("member");
+                predicates.add(
+                        cb.equal(
+                                memberJoin.get("membershipVirtualId"),
+                                bsc.getMember().getMembershipVirtualId()
+                        )
+                );
+            }
+            if (bsc.getBorrowingRefId() != null) {
+                predicates.add(
+                        cb.equal(
+                                root.get("borrowingRefId"),
+                                bsc.getBorrowingRefId()
                         )
                 );
             }
