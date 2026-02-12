@@ -19,6 +19,7 @@ public class PrintBorrowingsTable {
                 new ColumnDef<>("RETURNED AT", 5, b -> b.getReturnedAt() != null ? DF.format(b.getReturnedAt()) : null),
                 new ColumnDef<>("BOOK ISBN", 8, b -> b.getBook().getIsbn()),
                 new ColumnDef<>("BOOK NAME", 5, b -> b.getBook().getTitle()),
+                new ColumnDef<>("COPIES TAKEN", 5, b -> b.getQuantity().toString()),
                 new ColumnDef<>("MEMBER ID", 5, b -> b.getMember().getMembershipVirtualId()),
                 new ColumnDef<>("MEMBER NAME", 5, b -> b.getMember().getName()),
                 new ColumnDef<>("MEMBER EMAIL", 5, b -> b.getMember().getEmail()),
