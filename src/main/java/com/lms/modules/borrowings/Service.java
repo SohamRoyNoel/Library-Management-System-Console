@@ -26,7 +26,7 @@ public class Service {
         try {
             session = HibernateUtil.getSessionFactory().openSession();
             tx = session.beginTransaction();
-            session.persist(borrow);
+            session.merge(borrow);
             tx.commit();
             return borrow;
         } catch (Exception e) {
