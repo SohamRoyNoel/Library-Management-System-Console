@@ -1,5 +1,6 @@
 package com.lms.modules.member;
 
+import com.lms.db.TxManager;
 import com.lms.dto.MemberSearchCriteria;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
@@ -22,7 +23,9 @@ public class MemberConsole {
             switch (action) {
                 case "add":
                     Member memberModel = this.readMemberInput(sc, null, null);
-                    Member savedMem = Service.getInstance().saveMember(memberModel);
+                    Member savedMem = TxManager.execute(session -> {
+                        return Service.getInstance().saveMember(memberModel, session);
+                    });
                     membersList.add(savedMem);
                     System.out.println("Saved Member Details");
                     PrintMembersTable.printMembersTable(membersList);
@@ -31,15 +34,19 @@ public class MemberConsole {
                     this.searchMember(sc);
                     break;
                 case "update":
-                    Member memberUpdateModel = this.updateMember(sc, null);
-                    Member updatedMem = Service.getInstance().saveMember(memberUpdateModel);
+                    Member memberUpdateModel = this.updateMember(sc, "update");
+                    Member updatedMem = TxManager.execute(session -> {
+                        return Service.getInstance().saveMember(memberUpdateModel, session);
+                    });
                     membersList.add(updatedMem);
                     System.out.println("Updated Member Details");
                     PrintMembersTable.printMembersTable(membersList);
                     break;
                 case "delete":
                     Member memberDeleteModel = this.updateMember(sc,  "delete");
-                    Member deletedMem = Service.getInstance().saveMember(memberDeleteModel);
+                    Member deletedMem = TxManager.execute(session -> {
+                        return Service.getInstance().saveMember(memberDeleteModel, session);
+                    });
                     if (!deletedMem.isActive()) {
                         System.out.println("Member Deactivated with ID of " + deletedMem.getId());
                     }
@@ -97,6 +104,13 @@ public class MemberConsole {
                 Math.abs(ThreadLocalRandom.current().nextLong()), 36
         ).substring(0, 6).toUpperCase() : base.getMembershipVirtualId();
 
+        if ("update".equalsIgnoreCase(flag)) {
+            // Never create another new build object while update, use existing
+            this.applyMemberUpdates(base, name, email, phNo, doj, govtId, fee, membershipExpiredAt, membershipType);
+            return base;
+        }
+
+        // CREATE
         return Member.builder()
                 .id(base.getId())
                 .name(name)
@@ -109,6 +123,18 @@ public class MemberConsole {
                 .membershipVirtualId(membershipVirtualId)
                 .membershipType(membershipType).build();
     }
+
+    private void applyMemberUpdates(Member base, String name, String email, String phNo, Date doj, String govtId, Float fee, Date expiry, String type) {
+        base.setName(name);
+        base.setEmail(email);
+        base.setPhoneNumber(phNo);
+        base.setDoj(doj);
+        base.setGovtId(govtId);
+        base.setFeeAmount(fee);
+        base.setMembershipExpiredAt(expiry);
+        base.setMembershipType(type);
+    }
+
 
     private List<Member> searchMember(Scanner sc) {
         MemberSearchCriteria msc = new MemberSearchCriteria();

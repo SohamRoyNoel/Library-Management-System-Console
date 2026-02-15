@@ -7,7 +7,6 @@ import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import org.hibernate.Session;
-import org.hibernate.Transaction;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,17 +20,8 @@ public class Service {
         return INSTANCE;
     }
 
-    public Member saveMember(Member member) {
-        Transaction tx = null;
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            tx = session.beginTransaction();
-            Member savedMember = session.merge(member);
-            tx.commit();
-            return savedMember;
-        } catch (Exception e) {
-            if (tx != null) tx.rollback();
-            throw e;
-        }
+    public Member saveMember(Member member, Session session) {
+        return (Member) session.merge(member);
     }
 
     public List<Member> searchMember(MemberSearchCriteria criteria) {

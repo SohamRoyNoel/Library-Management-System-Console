@@ -20,7 +20,6 @@ public class BooksConsole {
 					TxManager.execute(session -> {
 						return Service.getInstance().saveABook(booksModel, session);
 					});
-//					Service.getInstance().saveABook(booksModel);
 					break;
 				case "search":
 					this.bookListingUtils(sc, "", "Book not found.");
