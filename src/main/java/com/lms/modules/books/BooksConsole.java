@@ -1,5 +1,6 @@
 package com.lms.modules.books;
 
+import com.lms.db.TxManager;
 import com.lms.dto.BookSearchCriteria;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
@@ -16,7 +17,10 @@ public class BooksConsole {
 			switch (action) {
 				case "add":
 					Book booksModel = this.readBookInput(sc, null);
-					Service.getInstance().saveABook(booksModel);
+					TxManager.execute(session -> {
+						return Service.getInstance().saveABook(booksModel, session);
+					});
+//					Service.getInstance().saveABook(booksModel);
 					break;
 				case "search":
 					this.bookListingUtils(sc, "", "Book not found.");
@@ -145,6 +149,9 @@ public class BooksConsole {
 			b.setDeleted(true);
 			updatedBookModel = b;
 		}
-		Service.getInstance().saveABook(updatedBookModel);
+		Book finalUpdatedBookModel = updatedBookModel;
+		TxManager.execute(session -> {
+			return Service.getInstance().saveABook(finalUpdatedBookModel, session);
+		});
 	}
 }

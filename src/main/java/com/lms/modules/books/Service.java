@@ -21,16 +21,9 @@ public class Service {
         return INSTANCE;
     }
     
-	public void saveABook(Book bookModel) {
+	public Book saveABook(Book bookModel, Session session) {
 		Transaction tx = null;
-		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-			tx = session.beginTransaction();
-			session.merge(bookModel);
-			tx.commit();
-		} catch (Exception e) {
-			if (tx != null) tx.rollback();
-            throw e;
-		}
+		return (Book) session.merge(bookModel);
 	}
 
 	public List<Book> searchBooks(BookSearchCriteria criteria) {

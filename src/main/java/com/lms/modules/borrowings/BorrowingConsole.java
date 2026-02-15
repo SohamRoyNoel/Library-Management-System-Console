@@ -1,5 +1,6 @@
 package com.lms.modules.borrowings;
 
+import com.lms.db.TxManager;
 import com.lms.dto.BookSearchCriteria;
 import com.lms.dto.BorrowingResult;
 import com.lms.dto.BorrowingSearchCriteria;
@@ -126,7 +127,9 @@ public class BorrowingConsole {
             return;
         }
         books.get(0).setQuantity(books.get(0).getQuantity() - borrowing.getQuantity());
-        com.lms.modules.books.Service.getInstance().saveABook(books.get(0));
+        TxManager.execute(session -> {
+            return com.lms.modules.books.Service.getInstance().saveABook(books.get(0), session);
+        });
     }
 
     private List<Borrowing> searchDetails(Scanner sc) {
