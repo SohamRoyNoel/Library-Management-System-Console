@@ -8,9 +8,11 @@ import com.lms.dto.MemberSearchCriteria;
 import com.lms.modules.books.Book;
 import com.lms.modules.member.Member;
 import com.lms.modules.member.Service;
+import jakarta.annotation.Nullable;
 import org.hibernate.Session;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -31,7 +33,8 @@ public class BorrowingConsole {
                     Borrowing borrowing = this.addABorrowing(sc,  "").getUpdatedBorrowing();
                     TxManager.execute(session -> {
                         Borrowing persisted = com.lms.modules.borrowings.Service.getInstance().saveABooking(borrowing, session);
-                        this.updateBookDataOnSuccessfulBorrow(persisted, session);
+                        Book book = this.updateBookDataOnSuccessfulBorrow(persisted, true);
+                        com.lms.modules.books.Service.getInstance().saveABook(book, session);
                         borrowList.add(persisted);
                         System.out.println("Saved Borrowing Details");
                         PrintBorrowingsTable.printBorrowingsTable(borrowList);
@@ -52,11 +55,15 @@ public class BorrowingConsole {
                         System.out.println("Updated Borrowing Details");
                         if (bookDiff != 0) {
                             updateBooking.setQuantity(bookDiff);
-                            this.updateBookDataOnSuccessfulBorrow(updateBooking, session);
+                            Book book = this.updateBookDataOnSuccessfulBorrow(updateBooking, true);
+                            com.lms.modules.books.Service.getInstance().saveABook(book, session);
                         }
                         PrintBorrowingsTable.printBorrowingsTable(borrowList);
                         return null;
                     });
+                    break;
+                case "delete":
+                    this.deleteBorrowing(sc);
                     break;
                 default:
                     break;
@@ -64,6 +71,29 @@ public class BorrowingConsole {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private void deleteBorrowing(Scanner sc) {
+        System.out.print("Please enter reference number: ");
+        String refNo = "reference:" + sc.nextLine();
+        BorrowingSearchCriteria bsc = this.parseSearchInput(refNo);
+        List<Borrowing> borrowList = com.lms.modules.borrowings.Service.getInstance().searchBorrowing(bsc);
+        PrintBorrowingsTable.printBorrowingsTable(borrowList);
+        System.out.print("Type 'Y' to confirm");
+        String confirmation = sc.nextLine();
+        if (!"y".equalsIgnoreCase(confirmation) || borrowList.isEmpty()) {
+            return;
+        }
+        borrowList.get(0).setIsReturned(true);
+        borrowList.get(0).setReturnedAt(new Date());
+        TxManager.execute(session -> {
+            Borrowing updateBooking = com.lms.modules.borrowings.Service.getInstance().saveABooking(borrowList.get(0), session);
+            updateBooking.setQuantity(borrowList.get(0).getQuantity());
+            Book book = this.updateBookDataOnSuccessfulBorrow(updateBooking, false);
+            com.lms.modules.books.Service.getInstance().saveABook(book, session);
+            return null;
+        });
+        System.out.print("Return Accepted");
     }
 
     private BorrowingResult addABorrowing(Scanner sc, String refNo) {
@@ -140,15 +170,20 @@ public class BorrowingConsole {
         base.setMember(member);
     }
 
-    private void updateBookDataOnSuccessfulBorrow(Borrowing borrowing, Session session) {
+    private Book updateBookDataOnSuccessfulBorrow(Borrowing borrowing, Boolean flag) {
         BookSearchCriteria bsc = new BookSearchCriteria();
         bsc.setId(borrowing.getBook().getId());
         List<Book> books = com.lms.modules.books.Service.getInstance().searchBooks(bsc);
         if (books.get(0).getQuantity() < borrowing.getQuantity()) {
             System.out.println("Available: " + books.get(0).getQuantity() + " Requested: " + borrowing.getQuantity());
-            return;
+            return null;
         }
-        books.get(0).setQuantity(books.get(0).getQuantity() - borrowing.getQuantity());
+        if (flag) {
+            books.get(0).setQuantity(books.get(0).getQuantity() - borrowing.getQuantity());
+        } else {
+            books.get(0).setQuantity(books.get(0).getQuantity() + borrowing.getQuantity());
+        }
+        return books.get(0);
     }
 
     private List<Borrowing> searchDetails(Scanner sc) {
