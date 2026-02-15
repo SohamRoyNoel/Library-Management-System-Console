@@ -10,6 +10,7 @@ public class PrintBorrowingsTable {
     private static final SimpleDateFormat DF = new SimpleDateFormat("yyyy-MM-dd");
 
     public static void printBorrowingsTable(List<Borrowing> borrowings) {
+        System.out.println("=====> " + String.valueOf(borrowings.get(0).getBook().getIsbn()));
         TablePrinter.print(borrowings, List.of(
                 new ColumnDef<>("REFERENCE ID", 5, b -> String.valueOf(b.getBorrowingRefId())),
                 new ColumnDef<>("BORROWED AT", 10, b -> DF.format(b.getBorrowedAt())),

@@ -20,25 +20,8 @@ public class Service {
         return INSTANCE;
     }
 
-    public Borrowing saveABooking(Borrowing borrow) {
-        Transaction tx = null;
-        Session session = null;
-        try {
-            session = HibernateUtil.getSessionFactory().openSession();
-            tx = session.beginTransaction();
-            session.merge(borrow);
-            tx.commit();
-            return borrow;
-        } catch (Exception e) {
-            if (tx != null && tx.isActive()) {
-                tx.rollback();
-            }
-            throw e;
-        } finally {
-            if (session != null && session.isOpen()) {
-                session.close();
-            }
-        }
+    public Borrowing saveABooking(Borrowing borrow, Session session) {
+        return (Borrowing) session.merge(borrow);
     }
 
     public List<Borrowing> searchBorrowing(BorrowingSearchCriteria bsc) {

@@ -112,7 +112,6 @@ public class MemberConsole {
 
         // CREATE
         return Member.builder()
-                .id(base.getId())
                 .name(name)
                 .email(email)
                 .phoneNumber(phNo)

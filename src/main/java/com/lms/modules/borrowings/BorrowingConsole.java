@@ -8,7 +8,7 @@ import com.lms.dto.MemberSearchCriteria;
 import com.lms.modules.books.Book;
 import com.lms.modules.member.Member;
 import com.lms.modules.member.Service;
-import jakarta.annotation.Nonnull;
+import org.hibernate.Session;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -28,12 +28,15 @@ public class BorrowingConsole {
         try {
             switch (action) {
                 case "add":
-                    Borrowing borrowing = this.addABorrowing(sc, "").getUpdatedBorrowing();
-                    Borrowing savedBooking = com.lms.modules.borrowings.Service.getInstance().saveABooking(borrowing);
-                    borrowList.add(savedBooking);
-                    System.out.println("Saved Borrowing Details");
-                    this.updateBookDataOnSuccessfulBorrow(savedBooking);
-                    PrintBorrowingsTable.printBorrowingsTable(borrowList);
+                    Borrowing borrowing = this.addABorrowing(sc,  "").getUpdatedBorrowing();
+                    TxManager.execute(session -> {
+                        Borrowing persisted = com.lms.modules.borrowings.Service.getInstance().saveABooking(borrowing, session);
+                        this.updateBookDataOnSuccessfulBorrow(persisted, session);
+                        borrowList.add(persisted);
+                        System.out.println("Saved Borrowing Details");
+                        PrintBorrowingsTable.printBorrowingsTable(borrowList);
+                        return null;
+                    });
                     break;
                 case "search":
                     List<Borrowing> listOfBorrowings = this.searchDetails(sc);
@@ -43,14 +46,17 @@ public class BorrowingConsole {
                     var update = this.updateABorrowing(sc);
                     Borrowing updatedBorrowingBody = update.borrowing();
                     int bookDiff = update.difference();
-                    Borrowing updateBooking = com.lms.modules.borrowings.Service.getInstance().saveABooking(updatedBorrowingBody);
-                    borrowList.add(updateBooking);
-                    System.out.println("Updated Borrowing Details");
-                    if (bookDiff != 0) {
-                        updateBooking.setQuantity(bookDiff);
-                        this.updateBookDataOnSuccessfulBorrow(updateBooking);
-                    }
-                    PrintBorrowingsTable.printBorrowingsTable(borrowList);
+                    TxManager.execute(session -> {
+                        Borrowing updateBooking = com.lms.modules.borrowings.Service.getInstance().saveABooking(updatedBorrowingBody, session);
+                        borrowList.add(updateBooking);
+                        System.out.println("Updated Borrowing Details");
+                        if (bookDiff != 0) {
+                            updateBooking.setQuantity(bookDiff);
+                            this.updateBookDataOnSuccessfulBorrow(updateBooking, session);
+                        }
+                        PrintBorrowingsTable.printBorrowingsTable(borrowList);
+                        return null;
+                    });
                     break;
                 default:
                     break;
@@ -60,13 +66,13 @@ public class BorrowingConsole {
         }
     }
 
-    private BorrowingResult addABorrowing(Scanner sc, @Nonnull String refNo) {
+    private BorrowingResult addABorrowing(Scanner sc, String refNo) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
         BorrowingSearchCriteria borrowingSearchCriteria;
         List<Borrowing> borrowings = null;
         BorrowingResult brs = new BorrowingResult();
 
-        if (!refNo.isEmpty()) {
+        if (!"".equalsIgnoreCase(refNo)) {
             borrowingSearchCriteria = new BorrowingSearchCriteria();
             borrowingSearchCriteria.setBorrowingRefId(refNo);
              borrowings = com.lms.modules.borrowings.Service.getInstance().searchBorrowing(borrowingSearchCriteria);
@@ -74,7 +80,7 @@ public class BorrowingConsole {
 
         System.out.print("Borrowed Till: ");
         String borrowedTill = sc.nextLine();
-        if (borrowings == null && refNo.isEmpty()) {
+        if (borrowings == null && !"".equalsIgnoreCase(refNo)) {
             throw new RuntimeException("No borrowing data found");
         }
         Date dueDate = !borrowedTill.isBlank() ? Date.from(
@@ -84,13 +90,14 @@ public class BorrowingConsole {
         ) : borrowings.get(0).getBorrowedTill();
 
         System.out.print("Quantity: ");
-        String quantity = orElse(sc.nextLine(), borrowings.get(0).getQuantity().toString());
+        var cc = sc.nextLine();
+        String quantity = orElse(cc, borrowings != null ? borrowings.get(0).getQuantity().toString() : "");
 
         System.out.print("ISBN: ");
-        String isbn = orElse(sc.nextLine(), borrowings.get(0).getBook().getIsbn());
+        String isbn = orElse(sc.nextLine(), borrowings != null ? borrowings.get(0).getBook().getIsbn() : "");
 
         System.out.print("Member Id: ");
-        String memberId = orElse(sc.nextLine(), borrowings.get(0).getMember().getMembershipVirtualId());
+        String memberId = orElse(sc.nextLine(), borrowings != null ? borrowings.get(0).getMember().getMembershipVirtualId() : "");
 
         MemberSearchCriteria msc = new MemberSearchCriteria();
         msc.setMembershipVirtualId(memberId);
@@ -104,9 +111,16 @@ public class BorrowingConsole {
             System.out.println("Wrong Info, Fuck off now");
             throw new RuntimeException("Wrong Info, Fuck off now");
         }
-        Borrowing borrowingBuilder = com.lms.modules.borrowings.Borrowing.builder().
-                id(borrowings.get(0).getId())
-                .borrowedAt(borrowings.get(0).getBorrowedAt())
+        // UPDATE
+        if (!"".equalsIgnoreCase(refNo) && borrowings != null) {
+            this.applyBorrowingUpdates(borrowings.get(0), borrowings.get(0).getBorrowedAt(), dueDate, Integer.parseInt(quantity), books.get(0), members.get(0));
+            brs.setUpdatedBorrowing(borrowings.get(0));
+            brs.setPreviousBorrowings(borrowings);
+            return brs;
+        }
+
+        // CREATE
+        Borrowing borrowingBuilder = com.lms.modules.borrowings.Borrowing.builder()
                 .borrowedTill(dueDate)
                 .quantity(Integer.parseInt(quantity))
                 .book(books.get(0))
@@ -118,7 +132,15 @@ public class BorrowingConsole {
         return brs;
     }
 
-    private void updateBookDataOnSuccessfulBorrow(Borrowing borrowing) {
+    private void applyBorrowingUpdates(Borrowing base, Date borrowingAt, Date dueDate, int quantity, Book book, Member member) {
+        base.setBorrowedAt(borrowingAt);
+        base.setBorrowedTill(dueDate);
+        base.setQuantity(quantity);
+        base.setBook(book);
+        base.setMember(member);
+    }
+
+    private void updateBookDataOnSuccessfulBorrow(Borrowing borrowing, Session session) {
         BookSearchCriteria bsc = new BookSearchCriteria();
         bsc.setId(borrowing.getBook().getId());
         List<Book> books = com.lms.modules.books.Service.getInstance().searchBooks(bsc);
@@ -127,9 +149,6 @@ public class BorrowingConsole {
             return;
         }
         books.get(0).setQuantity(books.get(0).getQuantity() - borrowing.getQuantity());
-        TxManager.execute(session -> {
-            return com.lms.modules.books.Service.getInstance().saveABook(books.get(0), session);
-        });
     }
 
     private List<Borrowing> searchDetails(Scanner sc) {
