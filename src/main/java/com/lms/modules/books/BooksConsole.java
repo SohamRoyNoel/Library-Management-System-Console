@@ -2,15 +2,17 @@ package com.lms.modules.books;
 
 import com.lms.db.TxManager;
 import com.lms.dto.BookSearchCriteria;
+import com.lms.utils.FileOperations;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 
+import java.io.IOException;
 import java.util.*;
 
 public class BooksConsole {
 	public void decideActions(Scanner sc) {
 		System.out.println("What you want to do with books?");
-		System.out.println("Add | Update | Delete | Search");
+		System.out.println("Add | Update | Delete | Search | Import");
 
 		String action = sc.nextLine();
 		try {
@@ -29,6 +31,9 @@ public class BooksConsole {
 					break;
 				case "delete":
 					this.bookUpdaterUtils(sc, "delete");
+				case "import":
+					this.importBooksFromExcel(sc);
+					break;
 				default:
 					System.out.println("Invalid action");
 					break;
@@ -39,6 +44,15 @@ public class BooksConsole {
 			throw e;
 		}
 	}
+
+	private void importBooksFromExcel(@Nonnull Scanner sc) {
+		FileOperations fo = new FileOperations();
+        try {
+            fo.readExcelFile();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
 	private Book readBookInput(@Nonnull Scanner sc, @Nullable Book book) {
 		Book base = (book != null) ? book : new Book();
