@@ -146,7 +146,6 @@ public class FileOperations {
             }
 
             if ("row".equals(name)) {
-
                 if (currentRowNumber == 0) {
                     // Header row: build column name → index map
                     for (Map.Entry<Integer, String> entry : currentRow.entrySet()) {
@@ -156,69 +155,61 @@ public class FileOperations {
                         }
                     }
                 } else {
-                    try {
-                        T obj = type.getDeclaredConstructor().newInstance();
+                    boolean allNull = currentRow.values().stream().allMatch(Objects::isNull);
+                    if (!allNull) {
+                        try {
+                            T obj = type.getDeclaredConstructor().newInstance();
 
-                        for (Field field : type.getDeclaredFields()) {
-                            ExcelColumn annotation = field.getAnnotation(ExcelColumn.class);
-                            if (annotation == null) continue;
+                            for (Field field : type.getDeclaredFields()) {
+                                ExcelColumn annotation = field.getAnnotation(ExcelColumn.class);
+                                if (annotation == null) continue;
 
-                            String columnName = annotation.value().trim().toLowerCase();
-                            if (!columnMap.containsKey(columnName)) continue;
+                                String columnName = annotation.value().trim().toLowerCase();
+                                if (!columnMap.containsKey(columnName)) continue;
 
-                            String value = currentRow.get(columnMap.get(columnName));
-                            field.setAccessible(true);
+                                String value = currentRow.get(columnMap.get(columnName));
+                                field.setAccessible(true);
+                                System.out.println("Line "+ columnName);
+                                System.out.println("Value "+ value);
+                                if (value == null) continue;
 
-                            System.out.println("Field Name  => " + columnName);
-                            System.out.println("Field Value => " + value);
-                            System.out.println("Field Type  => " + field.getType());
+                                Class<?> fieldType = field.getType();
 
-                            if (value == null) continue;
-
-                            Class<?> fieldType = field.getType();
-
-                            if (fieldType == String.class) {
-                                field.set(obj, value);
-
-                            } else if (fieldType == float.class || fieldType == Float.class) {
-                                field.set(obj, Float.parseFloat(value));
-
-                            } else if (fieldType == double.class || fieldType == Double.class) {
-                                field.set(obj, Double.parseDouble(value));
-
-                            } else if (fieldType == int.class || fieldType == Integer.class) {
-                                // Excel may store integers as "25.0" — handle that
-                                field.set(obj, (int) Double.parseDouble(value));
-
-                            } else if (fieldType == long.class || fieldType == Long.class) {
-                                field.set(obj, (long) Double.parseDouble(value));
-
-                            } else if (fieldType == boolean.class || fieldType == Boolean.class) {
-                                // Handle plain "true"/"false", "1"/"0", or formula results like "=FALSE()"
-                                String normalized = value.trim().toLowerCase();
-                                boolean boolValue = "true".equals(normalized)
-                                        || "1".equals(normalized)
-                                        || "yes".equals(normalized);
-                                field.set(obj, boolValue);
-
-                            } else if (fieldType == Date.class) {
-                                if (value.startsWith(DATE_PREFIX)) {
-                                    // Convert Excel date serial number to java.util.Date
-                                    double serial = Double.parseDouble(value.substring(DATE_PREFIX.length()));
-                                    field.set(obj, DateUtil.getJavaDate(serial));
+                                if (fieldType == String.class) {
+                                    field.set(obj, value);
+                                } else if (fieldType == float.class || fieldType == Float.class) {
+                                    field.set(obj, Float.parseFloat(value));
+                                } else if (fieldType == double.class || fieldType == Double.class) {
+                                    field.set(obj, Double.parseDouble(value));
+                                } else if (fieldType == int.class || fieldType == Integer.class) {
+                                    // Excel may store integers as "25.0" — handle that
+                                    field.set(obj, (int) Double.parseDouble(value));
+                                } else if (fieldType == long.class || fieldType == Long.class) {
+                                    field.set(obj, (long) Double.parseDouble(value));
+                                } else if (fieldType == boolean.class || fieldType == Boolean.class) {
+                                    // Handle plain "true"/"false", "1"/"0", or formula results like "=FALSE()"
+                                    String normalized = value.trim().toLowerCase();
+                                    boolean boolValue = "true".equals(normalized)
+                                            || "1".equals(normalized)
+                                            || "yes".equals(normalized);
+                                    field.set(obj, boolValue);
+                                } else if (fieldType == Date.class) {
+                                    if (value.startsWith(DATE_PREFIX)) {
+                                        double serial = Double.parseDouble(value.substring(DATE_PREFIX.length()));
+                                        Date date = DateUtil.getJavaDate(serial);
+                                        field.set(obj, date);
+                                    }
                                 }
                             }
+                            batch.add(obj);
+                            if (batch.size() == batchSize) {
+                                result.addAll(batch);
+                                batch.clear();
+                            }
+
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
-
-                        batch.add(obj);
-
-                        if (batch.size() == batchSize) {
-                            result.addAll(batch);
-                            batch.clear();
-                        }
-
-                    } catch (Exception e) {
-                        e.printStackTrace();
                     }
                 }
 
@@ -234,8 +225,6 @@ public class FileOperations {
             }
         }
 
-        // ── Helpers ──────────────────────────────────────────────────────────────
-
         private int getColumnIndex(String cellRef) {
             int col = 0;
             for (int i = 0; i < cellRef.length(); i++) {
@@ -247,15 +236,6 @@ public class FileOperations {
                 }
             }
             return col - 1; // zero-based
-        }
-
-        private String normalize(String value) {
-            if (value == null) return null;
-            return value
-                    .replace('\u00A0', ' ')  // replace non-breaking space
-                    .replaceAll("\\s+", " ") // collapse spaces
-                    .trim()
-                    .toLowerCase();
         }
     }
 }

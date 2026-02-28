@@ -49,7 +49,7 @@ public class BooksConsole {
 		FileOperations fo = new FileOperations();
         try {
             List<Book> bookList = fo.readExcelFile(Book.class, 10);
-			System.out.println("Book => " + bookList.get(0));
+			Service.getInstance().saveABook(bookList);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
