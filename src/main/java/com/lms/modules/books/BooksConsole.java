@@ -48,8 +48,9 @@ public class BooksConsole {
 	private void importBooksFromExcel(@Nonnull Scanner sc) {
 		FileOperations fo = new FileOperations();
         try {
-            fo.readExcelFile();
-        } catch (IOException e) {
+            List<Book> bookList = fo.readExcelFile(Book.class, 10);
+			System.out.println("Book => " + bookList.get(0));
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
